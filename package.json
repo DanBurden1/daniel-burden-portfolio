@@ -1,0 +1,17 @@
+{
+  "name": "daniel-burden-portfolio",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "dbCreate": "wrangler d1 create daniel-burden-content",
+    "dbMigrate": "wrangler d1 migrations apply daniel-burden-content --remote"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  },
+  "dependencies": {
+    "jose": "^5.9.6"
+  }
+}
