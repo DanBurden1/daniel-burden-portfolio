@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Daniel Burden — Site dashboard</title>
+<style>
+:root{color-scheme:light dark;font:16px/1.55 system-ui,sans-serif;background:#101114;color:#f5f5f5}*{box-sizing:border-box}body{margin:0}.wrap{max-width:980px;margin:auto;padding:28px 20px 80px}header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:1px solid #393a40;padding-bottom:18px}h1{font-size:25px;margin:0;flex:1}button,a.btn{border:0;border-radius:8px;padding:10px 15px;background:#f5f5f5;color:#111;font:inherit;text-decoration:none;cursor:pointer}button.secondary,a.secondary{background:#272930;color:#fff;border:1px solid #454750}.hint{color:#b7bac4}textarea{width:100%;min-height:560px;background:#191b20;color:#e9eaf0;border:1px solid #41434d;border-radius:10px;padding:16px;font:13px/1.5 ui-monospace,monospace;tab-size:2}section{margin-top:24px}.status{min-height:28px;color:#a9d6a9}.upload{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:12px 0}input[type=file]{max-width:100%}.small{font-size:13px;color:#b7bac4}
+</style></head><body><main class="wrap">
+<header><h1>Daniel Burden — Site dashboard</h1><a class="btn secondary" href="/">View website</a><button id="save">Save &amp; publish</button></header>
+<section><p class="hint">Edit your portfolio content below. This is the content behind the website: profile, projects, credits, education, skills, About and Contact. Keep the JSON structure intact; change the text and image paths inside it.</p>
+<div class="upload"><label for="image">Upload a photo:</label><input id="image" type="file" accept="image/*"><button class="secondary" id="upload">Upload image</button><span id="imageurl" class="small"></span></div>
+<p class="small">After upload, copy the returned image path (for example <code>/media/abc123.jpg</code>) into the relevant <code>heroImg</code>, <code>aboutImg</code> or project <code>img</code> field in the JSON.</p>
+<textarea id="data" spellcheck="false" aria-label="Portfolio content JSON"></textarea><p id="status" class="status" role="status"></p>
+</section></main>
+<script>
+const area=document.querySelector('#data'),status=document.querySelector('#status');
+async function start(){const auth=await fetch('/api/admin/me');if(!auth.ok){document.body.innerHTML='<main class="wrap"><h1>Admin sign-in required</h1><p>Open this page through your Cloudflare Access sign-in and try again.</p><a class="btn" href="/">Return to website</a></main>';return}
+const r=await fetch('/api/content');if(!r.ok)throw new Error('Could not load website content');area.value=JSON.stringify(await r.json(),null,2)}
+document.querySelector('#save').onclick=async()=>{try{const data=JSON.parse(area.value);status.textContent='Saving…';const r=await fetch('/api/admin/content',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(data)});const out=await r.json();if(!r.ok)throw new Error(out.error||'Save failed');status.textContent='Saved and published. Your live website is updated.'}catch(e){status.textContent='Not saved: '+e.message}};
+document.querySelector('#upload').onclick=async()=>{const f=document.querySelector('#image').files[0];if(!f){status.textContent='Choose an image first.';return}const form=new FormData();form.append('file',f);status.textContent='Uploading…';const r=await fetch('/api/admin/upload',{method:'POST',body:form});const out=await r.json();if(!r.ok){status.textContent=out.error||'Upload failed';return}document.querySelector('#imageurl').textContent=out.url;await navigator.clipboard?.writeText(out.url).catch(()=>{});status.textContent='Image uploaded. Its path has been copied where browser permissions allow.'};
+start().catch(e=>status.textContent=e.message);
+</script></body></html>
